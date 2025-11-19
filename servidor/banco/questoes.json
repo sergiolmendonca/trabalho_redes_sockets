@@ -1,0 +1,333 @@
+[
+    {
+      "id": 1,
+      "enunciado": "Qual camada do modelo OSI é responsável pelo roteamento de pacotes entre redes diferentes?",
+      "opcoes": {
+        "a": "Camada de Enlace",
+        "b": "Camada de Rede",
+        "c": "Camada de Sessão",
+        "d": "Camada Física"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 2,
+      "enunciado": "Qual protocolo é amplamente utilizado para resolução de nomes para endereços IP?",
+      "opcoes": {
+        "a": "DHCP",
+        "b": "DNS",
+        "c": "FTP",
+        "d": "SMTP"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 3,
+      "enunciado": "Qual é a principal característica do protocolo TCP?",
+      "opcoes": {
+        "a": "Ser orientado a conexão",
+        "b": "Ser mais rápido que o UDP",
+        "c": "Não possuir controle de fluxo",
+        "d": "Transmitir apenas broadcast"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 4,
+      "enunciado": "Em uma rede Ethernet, qual método é usado para detectar colisões?",
+      "opcoes": {
+        "a": "CSMA/CD",
+        "b": "CSMA/CA",
+        "c": "TDMA",
+        "d": "FDMA"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 5,
+      "enunciado": "O protocolo HTTP opera em qual camada do modelo OSI?",
+      "opcoes": {
+        "a": "Transporte",
+        "b": "Aplicação",
+        "c": "Rede",
+        "d": "Apresentação"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 6,
+      "enunciado": "Qual endereço IP pertence à classe C?",
+      "opcoes": {
+        "a": "10.0.0.1",
+        "b": "172.16.0.1",
+        "c": "192.168.1.5",
+        "d": "224.0.0.5"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 7,
+      "enunciado": "Qual tecnologia permite criar múltiplas redes lógicas sobre uma mesma infraestrutura física?",
+      "opcoes": {
+        "a": "VPN",
+        "b": "VLAN",
+        "c": "NAT",
+        "d": "Proxy"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 8,
+      "enunciado": "O que significa a sigla DHCP?",
+      "opcoes": {
+        "a": "Dynamic Host Configuration Protocol",
+        "b": "Data Host Control Protocol",
+        "c": "Digital Hypertext Configuration Process",
+        "d": "Dynamic Hyperlink Control Protocol"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 9,
+      "enunciado": "O protocolo SSH é utilizado para:",
+      "opcoes": {
+        "a": "Transferência de arquivos insegura",
+        "b": "Acesso remoto seguro",
+        "c": "Envio de e-mails",
+        "d": "Monitoramento SNMP"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 10,
+      "enunciado": "Qual ferramenta é usada para diagnosticar o caminho percorrido pelos pacotes até um destino?",
+      "opcoes": {
+        "a": "ping",
+        "b": "netstat",
+        "c": "traceroute",
+        "d": "ipconfig"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 11,
+      "enunciado": "Qual dos seguintes protocolos funciona na camada de Transporte?",
+      "opcoes": {
+        "a": "IP",
+        "b": "TCP",
+        "c": "ARP",
+        "d": "DNS"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 12,
+      "enunciado": "Qual o tamanho de um endereço IPv6?",
+      "opcoes": {
+        "a": "32 bits",
+        "b": "48 bits",
+        "c": "64 bits",
+        "d": "128 bits"
+      },
+      "correta": "d"
+    },
+    {
+      "id": 13,
+      "enunciado": "NAT é utilizado para:",
+      "opcoes": {
+        "a": "Converter endereços privados para públicos",
+        "b": "Criptografar pacotes",
+        "c": "Gerenciar VLANs",
+        "d": "Substituir DHCP"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 14,
+      "enunciado": "Qual porta padrão é usada pelo protocolo HTTPS?",
+      "opcoes": {
+        "a": "21",
+        "b": "25",
+        "c": "443",
+        "d": "3389"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 15,
+      "enunciado": "O que é um endereço MAC?",
+           "opcoes": {
+        "a": "Endereço físico da placa de rede",
+        "b": "Endereço lógico IPv4",
+        "c": "Endereço configurado pelo DHCP",
+        "d": "Endereço de broadcast"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 16,
+      "enunciado": "Qual camada do modelo OSI agrega criptografia e compressão?",
+      "opcoes": {
+        "a": "Transporte",
+        "b": "Rede",
+        "c": "Apresentação",
+        "d": "Sessão"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 17,
+      "enunciado": "O protocolo ARP serve para:",
+      "opcoes": {
+        "a": "Obter o endereço MAC a partir do IP",
+        "b": "Obter IP a partir do MAC",
+        "c": "Gerenciar portas TCP",
+        "d": "Criar túneis VPN"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 18,
+      "enunciado": "O que caracteriza uma rede do tipo WAN?",
+      "opcoes": {
+        "a": "Cobertura dentro de um prédio",
+        "b": "Cobertura dentro de uma cidade",
+        "c": "Cobertura em grande escala geográfica",
+        "d": "Rede dentro de uma residência"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 19,
+      "enunciado": "Qual é a função do protocolo ICMP?",
+      "opcoes": {
+        "a": "Transferir arquivos",
+        "b": "Gerenciar rotas",
+        "c": "Notificar erros de rede",
+        "d": "Autenticar usuários"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 20,
+      "enunciado": "Qual porta é usada pelo protocolo DNS?",
+      "opcoes": {
+        "a": "53",
+        "b": "110",
+        "c": "161",
+        "d": "8080"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 21,
+      "enunciado": "Qual dos dispositivos atua na camada 2 do modelo OSI?",
+      "opcoes": {
+        "a": "Hub",
+        "b": "Switch",
+        "c": "Roteador",
+        "d": "Firewall"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 22,
+      "enunciado": "Qual protocolo é usado para enviar e-mails?",
+      "opcoes": {
+        "a": "IMAP",
+        "b": "POP3",
+        "c": "SMTP",
+        "d": "FTP"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 23,
+      "enunciado": "Qual é a principal vantagem do UDP em relação ao TCP?",
+      "opcoes": {
+        "a": "Maior confiabilidade",
+        "b": "Entrega garantida",
+        "c": "Menor latência",
+        "d": "Controle de fluxo"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 24,
+      "enunciado": "O que o protocolo FTP faz?",
+      "opcoes": {
+        "a": "Gerencia rotas",
+        "b": "Transfere arquivos",
+        "c": "Resolve nomes",
+        "d": "Criptografa dados"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 25,
+      "enunciado": "Qual tecnologia permite conectar vários dispositivos em uma rede sem fio?",
+      "opcoes": {
+        "a": "Ethernet",
+        "b": "Wi-Fi",
+        "c": "Bluetooth",
+        "d": "NFC"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 26,
+      "enunciado": "Como é chamado o intervalo de endereços privados 192.168.0.0/16?",
+      "opcoes": {
+        "a": "Classe A",
+        "b": "Classe B",
+        "c": "Classe C",
+        "d": "Multicast"
+      },
+      "correta": "c"
+    },
+    {
+      "id": 27,
+      "enunciado": "Qual comando exibe a tabela de rotas no Linux?",
+      "opcoes": {
+        "a": "route -n",
+        "b": "ping",
+        "c": "dig",
+        "d": "ss"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 28,
+      "enunciado": "Qual protocolo é utilizado para monitoramento de dispositivos de rede?",
+      "opcoes": {
+        "a": "SMTP",
+        "b": "SNMP",
+        "c": "NTP",
+        "d": "PPP"
+      },
+      "correta": "b"
+    },
+    {
+      "id": 29,
+      "enunciado": "Qual camada OSI define os meios físicos de transmissão?",
+      "opcoes": {
+        "a": "Física",
+        "b": "Rede",
+        "c": "Apresentação",
+        "d": "Transporte"
+      },
+      "correta": "a"
+    },
+    {
+      "id": 30,
+      "enunciado": "O que faz o protocolo NTP?",
+      "opcoes": {
+        "a": "Sincroniza horário entre sistemas",
+        "b": "Gerencia rotas dinâmicas",
+        "c": "Define políticas de firewall",
+        "d": "Gerencia domínios DNS"
+      },
+      "correta": "a"
+    }
+  ]
+
