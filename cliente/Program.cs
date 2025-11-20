@@ -1,28 +1,46 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
-var client = new UdpClient();
-
-string mensagem = "Jogador 1 <|EOM|>";
-var bytes = Encoding.UTF8.GetBytes(mensagem);
-
-await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
-
-var result = await client.ReceiveAsync();
-
-Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
-
-while (true)
+namespace cliente
 {
-    var leitura = Console.ReadLine();
+    public class Program
+    {
+        public static async Task Main()
+        {
+            var client = new UdpClient();
 
-    bytes = Encoding.UTF8.GetBytes(leitura);
+            RespostaEnvioServidor respostaEnvioServidor = new RespostaEnvioServidor()
+            {
+                TiposResposta = TiposResposta.NICKNAME,
+                NickName = "nick"
+            };
 
-    await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
+            string mensagem = JsonSerializer.Serialize(respostaEnvioServidor);
 
-    result = await client.ReceiveAsync();
+            var bytes = Encoding.UTF8.GetBytes(mensagem);
 
-    Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
+            await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
+
+            var result = await client.ReceiveAsync();
+
+            Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
+
+            while (true)
+            {
+                var leitura = Console.ReadLine();
+
+                bytes = Encoding.UTF8.GetBytes(leitura);
+
+                await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
+
+                result = await client.ReceiveAsync();
+
+                Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
+            }
+        }
+    }
 }
+
 

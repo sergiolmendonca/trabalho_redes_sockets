@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace servidor
 {
@@ -9,7 +11,11 @@ namespace servidor
         private readonly int listenPort = 12345;
         private readonly byte[] buffer = new byte[1024];
         private List<Jogador> ListaJogadores = new List<Jogador>();
+        private List<Resposta> ListaRespostas = new List<Resposta>();
+        private List<Questao> ListaQuestoes = new List<Questao>();
         private Socket Listener;
+        private bool jogoIniciado = false;
+        private Questao? QuestaoAtual;
 
         public async Task StartListener()
         {
@@ -18,13 +24,30 @@ namespace servidor
 
             while (true)
             {
-                var receivedBytes = await RecebeMensagem();
+                Mensagem mensagem = new Mensagem();
+                
 
-                if (ListaJogadores.Count < 2) 
-                    IniciaJogador(receivedBytes);
-                else 
-                    EnviaMensagem("Acabou!", receivedBytes.RemoteEndPoint);
+                var recebido = await RecebeMensagem();
+                mensagem.ConverterMensagemRecebida(recebido, buffer);
+
+                await ProcessaRetorno(mensagem.RespostaRetornoCliente);
+
+                if (jogoIniciado)
+                    LoopJogo();
             }
+        }
+
+        private void LoopJogo()
+        {
+            if (ListaRespostas.Count == 0 && QuestaoAtual == null)
+                EnviarProximaQuestão();
+        }
+
+        private void EnviarProximaQuestão()
+        {
+            if (ListaQuestoes.Count == 0)
+                ListaQuestoes = new QuestoesService().GetQuestoes();
+
         }
 
         private async void AbreConexao()
@@ -41,38 +64,84 @@ namespace servidor
 
         private async Task<SocketReceiveFromResult> RecebeMensagem()
         {
-            
+            var endPointRemoto = new IPEndPoint(IPAddress.Any, 0);
 
-            EndPoint endPointRemoto = new IPEndPoint(IPAddress.Any, 0);
-
-            var receive = await Listener.ReceiveFromAsync(buffer, SocketFlags.None, endPointRemoto);
-
-            string mensagemRecebida = Encoding.UTF8.GetString(buffer, 0, receive.ReceivedBytes);
-
-            Console.WriteLine($"Mensagem recebida: {mensagemRecebida}");
-
-            return receive;
+            return await Listener.ReceiveFromAsync(buffer, SocketFlags.None, endPointRemoto);
         }
 
-        private async void EnviaMensagem(string mensagem, EndPoint destino)
+        private async Task EnviaMensagem(string mensagem, EndPoint endPointRemoto)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(mensagem);
-            await Listener.SendToAsync(bytes, SocketFlags.None, destino);
-        }
-
-        private void IniciaJogador(SocketReceiveFromResult socketReceived)
-        {
-            EndPoint endPointRemoto = socketReceived.RemoteEndPoint;
-
-            string mensagemRecebida = Encoding.UTF8.GetString(buffer, 0, socketReceived.ReceivedBytes);
-
-            if (!mensagemRecebida.Contains("NICKNAME:"))
-                EnviaMensagem("Mensagem inválida, Jogador não iniciado!", endPointRemoto);
-            else
+            RespostaEnvioCliente resposta = new RespostaEnvioCliente()
             {
-                ListaJogadores.Add(new Jogador(mensagemRecebida.Replace("NICKNAME:", ""), endPointRemoto));
-                EnviaMensagem("[OK] \n Jogador cadastrado! \n Aguardando início do Jogo... ", endPointRemoto);
+                TiposResposta = TiposResposta.MENSAGEM,
+                MensagemTexto = mensagem  
+            };
+
+            byte[] bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(resposta));
+            await Listener.SendToAsync(bytes, SocketFlags.None, endPointRemoto);
+        }
+
+        private async Task ProcessaRetorno(RespostaRetornoCliente? retornoCliente)
+        {
+            if (retornoCliente != null)
+            {
+                switch (retornoCliente.TiposResposta)
+                {
+                    case TiposResposta.NICKNAME:
+                        await IniciaJogador(retornoCliente.NickName, retornoCliente.EndPointRemoto);
+                        break;
+                    case TiposResposta.RESPOSTA:
+                        ProcessaResposta(retornoCliente.RespostaQuestao, retornoCliente.EndPointRemoto);
+                        break;
+                    case TiposResposta.MENSAGEM:
+                        Console.WriteLine(retornoCliente.MensagemTexto);
+                        break;
+                    default:
+                        Console.WriteLine("nada");
+                        break;
+                }
             }
+        }
+
+        private void ProcessaResposta(string? respostaQuestao, EndPoint? endPointRemoto)
+        {
+            bool primeiraResposta = false;
+            if (ListaRespostas.Count == 0) primeiraResposta = true;
+
+            ListaRespostas.Add(new Resposta()
+            {
+                RespostaTexto = respostaQuestao,
+                PrimeiraResposta = primeiraResposta,
+                Jogador = ListaJogadores.Where(x => x.EndPoint.Equals(endPointRemoto)).FirstOrDefault(),
+                Questao = QuestaoAtual
+            });
+            
+        }
+
+        private async Task IniciaJogador(string nickName, EndPoint endPointRemoto)
+        {
+            if (ListaJogadores.Count < 2)
+            {
+                Jogador jogador = new Jogador(nickName, endPointRemoto);
+                ListaJogadores.Add(jogador);
+
+                if (ListaJogadores.Count == 2)
+                    await ComecarJogo();
+                else
+                    await EnviaMensagem("Aguardando oponente...", endPointRemoto);
+                
+            }
+        }
+
+        private async Task ComecarJogo()
+        {
+            jogoIniciado = true;
+            foreach (var jogador in ListaJogadores)
+            {
+                await EnviaMensagem("Todos participantes estão prontos! prepare-se!", jogador.EndPoint);
+            }
+
+            await Task.Delay(3000);
         }
     }
 }

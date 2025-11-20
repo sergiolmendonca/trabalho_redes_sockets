@@ -32,7 +32,10 @@ namespace servidor
         {
             string json = GetJsonQuestoes();
 
-            return DeserializeJsonQuestoes(json);
+            List<Questao> lista = DeserializeJsonQuestoes(json);
+
+            var random = new Random();
+            return lista.OrderBy(x => random.Next()).ToList();
         }
 
         private string GetJsonQuestoes() => File.ReadAllText(_jsonPath);
