@@ -8,7 +8,7 @@ namespace servidor
 {
     public class UDPPlistener
     {
-        private readonly int listenPort = 12345;
+        private readonly int listenPort = 10000;
         private readonly byte[] buffer = new byte[1024];
         private List<Jogador> ListaJogadores = new List<Jogador>();
         private List<Resposta> ListaRespostas = new List<Resposta>();
@@ -33,21 +33,140 @@ namespace servidor
                 await ProcessaRetorno(mensagem.RespostaRetornoCliente);
 
                 if (jogoIniciado)
-                    LoopJogo();
+                    await LoopJogo();
             }
         }
 
-        private void LoopJogo()
+        private async Task LoopJogo()
         {
             if (ListaRespostas.Count == 0 && QuestaoAtual == null)
-                EnviarProximaQuestão();
+                await EnviarProximaQuestão();
+            
+            if (ListaRespostas.Count == 2) 
+            {
+                if (QuestaoAtual.Equals(ListaRespostas.FirstOrDefault()))
+                    await ValidaEnviaRespostas();
+                else 
+                    ListaRespostas = new List<Resposta>();
+            }
         }
 
-        private void EnviarProximaQuestão()
+        private async Task ValidaEnviaRespostas()
+        {
+            var primeiraResposta = ListaRespostas.Where(x => x.PrimeiraResposta).FirstOrDefault();
+            var segundaResposta = ListaRespostas.Where(x => !x.PrimeiraResposta).FirstOrDefault();
+
+            if (QuestaoAtual.Correta.Equals(primeiraResposta.RespostaTexto))
+            {
+                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ACERTOU_ANTES);
+                if (QuestaoAtual.Correta.Equals(segundaResposta.RespostaTexto))
+                    await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ACERTOU_SEM_PONTUACAO);
+            }
+            else if (QuestaoAtual.Correta.Equals(segundaResposta.RespostaTexto))
+            {
+                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ERROU);
+                await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ACERTOU_DEPOIS);
+            }
+            else
+            {
+                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ERROU);
+                await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ERROU);
+            }
+        }
+
+        private async Task ComputaPontosEnviaResultado(Jogador? jogador, StatusResultado statusResultado)
+        {
+            int pontuacaoRodada = 0;
+            bool acertou = false;
+            bool primeiro = false;
+            switch (statusResultado)
+            {
+                case StatusResultado.ACERTOU_ANTES:
+                    pontuacaoRodada = 5;
+                    acertou = true;
+                    primeiro = true;
+                    break;
+                case StatusResultado.ACERTOU_DEPOIS:
+                    pontuacaoRodada = 3;
+                    acertou = true;
+                    break;
+                case StatusResultado.ACERTOU_SEM_PONTUACAO:
+                    acertou = true;
+                    break;
+                case StatusResultado.ERROU:
+                    jogador.Errou++;
+                    break;
+                default:
+                    break;
+            }
+            
+            jogador.Pontuacao += pontuacaoRodada;
+            jogador.Acertou += acertou ? 1 : 0;
+            jogador.RepondeuAntes += primeiro ? 1 : 0;
+            jogador.RespondeuDepois += primeiro ? 0 : 1;
+
+            Resultado resultado = new Resultado()
+            {
+                TipoResultado = TipoResultado.PARCIAL,
+                Acertou = acertou,
+                Primeiro = primeiro,
+                Pontuacao = pontuacaoRodada
+            };
+
+            await EnviaResultado(resultado, jogador);
+        }
+
+        private async Task EnviaResultado(Resultado resultado, Jogador? jogador)
+        {
+            RespostaEnvioCliente respostaEnvio = new RespostaEnvioCliente()
+            {
+                TiposResposta = TiposResposta.RESULTADO,
+                Resultado = resultado  
+            };
+
+            await Enviar(respostaEnvio, jogador.EndPoint);
+        }
+
+        private void ComputaPontosPrimeiroJogadorAcertou(Jogador? jogador)
+        {
+            jogador.Pontuacao = jogador.Pontuacao + 5;
+            jogador.Acertou++;
+            jogador.RepondeuAntes++;
+        }
+
+        private void ComputaPontosSegundoJogadorAcertou(Jogador? jogador)
+        {
+            jogador.Pontuacao = jogador.Pontuacao + 3;
+            jogador.Acertou++;
+            jogador.RespondeuDepois++;
+        }
+
+        private async Task EnviarProximaQuestão()
+        {
+            CarregarProximaQuestao();
+
+            RespostaEnvioCliente respostaEnvio = new RespostaEnvioCliente()
+            {
+                TiposResposta = TiposResposta.PERGUNTA,
+                Questao = QuestaoAtual  
+            };
+
+            await EnviarParaTodos(respostaEnvio);
+        }
+
+        private void CarregarProximaQuestao()
         {
             if (ListaQuestoes.Count == 0)
+            {
                 ListaQuestoes = new QuestoesService().GetQuestoes();
-
+                QuestaoAtual = ListaQuestoes[0];
+            }
+            else 
+            {
+                int proximoIndex = ListaQuestoes.IndexOf(QuestaoAtual) + 1;
+                if (proximoIndex < ListaQuestoes.Count)
+                    QuestaoAtual = ListaQuestoes[proximoIndex];
+            }
         }
 
         private async void AbreConexao()
@@ -69,7 +188,7 @@ namespace servidor
             return await Listener.ReceiveFromAsync(buffer, SocketFlags.None, endPointRemoto);
         }
 
-        private async Task EnviaMensagem(string mensagem, EndPoint endPointRemoto)
+        private async Task EnviaMensagem(string mensagem, EndPoint? endPointRemoto)
         {
             RespostaEnvioCliente resposta = new RespostaEnvioCliente()
             {
@@ -77,8 +196,19 @@ namespace servidor
                 MensagemTexto = mensagem  
             };
 
-            byte[] bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(resposta));
+            await Enviar(resposta, endPointRemoto);
+        }
+
+        private async Task Enviar(RespostaEnvioCliente respostaEnvio, EndPoint? endPointRemoto)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(respostaEnvio));
             await Listener.SendToAsync(bytes, SocketFlags.None, endPointRemoto);
+        }
+
+        private async Task EnviarParaTodos(RespostaEnvioCliente respostaEnvio)
+        {
+            foreach(var jogador in ListaJogadores)
+                await Enviar(respostaEnvio, jogador.EndPoint);
         }
 
         private async Task ProcessaRetorno(RespostaRetornoCliente? retornoCliente)
@@ -118,7 +248,7 @@ namespace servidor
             
         }
 
-        private async Task IniciaJogador(string nickName, EndPoint endPointRemoto)
+        private async Task IniciaJogador(string? nickName, EndPoint? endPointRemoto)
         {
             if (ListaJogadores.Count < 2)
             {

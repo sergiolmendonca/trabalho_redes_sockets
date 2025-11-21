@@ -11,6 +11,7 @@ namespace servidor
         public TiposResposta TiposResposta { get; set; }
         public StatusResposta StatusResposta { get; set; }
         public Questao? Questao { get; set; }
+        public Resultado? Resultado { get; set; }
         public string? MensagemTexto { get; set; }
     }
 }

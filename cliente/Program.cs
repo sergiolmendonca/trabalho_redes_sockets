@@ -9,35 +9,17 @@ namespace cliente
     {
         public static async Task Main()
         {
-            var client = new UdpClient();
+            ClienteUDP udpCliente = new ClienteUDP();
 
-            RespostaEnvioServidor respostaEnvioServidor = new RespostaEnvioServidor()
-            {
-                TiposResposta = TiposResposta.NICKNAME,
-                NickName = "nick"
-            };
+            Console.WriteLine("Para iniciar o jogo informe seu nickname:");
+            string nickname = Console.ReadLine() ?? $"player{new Random().ToString()}";
 
-            string mensagem = JsonSerializer.Serialize(respostaEnvioServidor);
-
-            var bytes = Encoding.UTF8.GetBytes(mensagem);
-
-            await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
-
-            var result = await client.ReceiveAsync();
-
-            Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
+            await udpCliente.EnviaNickName(nickname);
 
             while (true)
             {
-                var leitura = Console.ReadLine();
-
-                bytes = Encoding.UTF8.GetBytes(leitura);
-
-                await client.SendAsync(bytes, bytes.Length, "localhost", 12345);
-
-                result = await client.ReceiveAsync();
-
-                Console.WriteLine("Resposta: " + Encoding.UTF8.GetString(result.Buffer));
+                RespostaRetornoServidor retornoServidor = await udpCliente.RecebeAsync();
+                Console.WriteLine(retornoServidor.MensagemTexto);
             }
         }
     }

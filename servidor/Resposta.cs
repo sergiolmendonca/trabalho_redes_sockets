@@ -9,8 +9,8 @@ namespace servidor
     public class Resposta
     {
         public bool PrimeiraResposta { get; set; }
-        public Jogador Jogador { get; set; }
-        public string RespostaTexto { get; set; }
-        public Questao Questao { get; set; }
+        public Jogador? Jogador { get; set; }
+        public string? RespostaTexto { get; set; }
+        public Questao? Questao { get; set; }
     }
 }
