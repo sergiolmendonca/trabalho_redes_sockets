@@ -19,7 +19,7 @@ namespace cliente
             while (true)
             {
                 RespostaRetornoServidor retornoServidor = await udpCliente.RecebeAsync();
-                Console.WriteLine(retornoServidor.MensagemTexto);
+                await udpCliente.ProcessaRetorno(retornoServidor);
             }
         }
     }

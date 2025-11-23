@@ -21,6 +21,7 @@ namespace cliente
         public ClienteUDP()
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _socket.Bind(new IPEndPoint(IPAddress.Any, 0));
             _endpoint = new IPEndPoint(IPAddress.Parse(_ipServidor), _porta);
         }
 
@@ -101,7 +102,7 @@ namespace cliente
             await EnviaResposta(resposta);
         }
 
-        private async Task EnviaResposta(string resposta)
+        public async Task EnviaResposta(string resposta)
         {
             RespostaEnvioServidor respostaEnvio = new RespostaEnvioServidor()
             {

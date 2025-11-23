@@ -8,14 +8,26 @@ namespace servidor
 {
     public class UDPPlistener
     {
-        private readonly int listenPort = 10000;
-        private readonly byte[] buffer = new byte[1024];
-        private List<Jogador> ListaJogadores = new List<Jogador>();
-        private List<Resposta> ListaRespostas = new List<Resposta>();
-        private List<Questao> ListaQuestoes = new List<Questao>();
-        private Socket Listener;
-        private bool jogoIniciado = false;
-        private Questao? QuestaoAtual;
+        private readonly int _listenPort;
+        private readonly byte[] _buffer;
+        private readonly Socket _listener;
+        private List<Jogador> _listaJogadores;
+        private List<Resposta> _listaRespostas;
+        private List<Questao> _listaQuestoes;
+        private bool _jogoIniciado;
+        private Questao? _questaoAtual;
+
+
+        public UDPPlistener()
+        {
+            _listener = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _buffer = new byte[1024];
+            _listenPort = 10000;
+            _listaJogadores = [];
+            _listaRespostas = [];
+            _listaQuestoes = [];
+            _jogoIniciado = false;
+        }
 
         public async Task StartListener()
         {
@@ -24,57 +36,107 @@ namespace servidor
 
             while (true)
             {
-                Mensagem mensagem = new Mensagem();
+                Mensagem mensagem = new();
                 
 
                 var recebido = await RecebeMensagem();
-                mensagem.ConverterMensagemRecebida(recebido, buffer);
+                mensagem.ConverterMensagemRecebida(recebido, _buffer);
 
                 await ProcessaRetorno(mensagem.RespostaRetornoCliente);
-
-                if (jogoIniciado)
+                
+                if (_jogoIniciado)
                     await LoopJogo();
             }
         }
 
         private async Task LoopJogo()
         {
-            if (ListaRespostas.Count == 0 && QuestaoAtual == null)
+            if (_listaRespostas.Count == 0 && _questaoAtual == null)
                 await EnviarProximaQuestão();
             
-            if (ListaRespostas.Count == 2) 
+            if (_listaRespostas.Count == 2) 
             {
-                if (QuestaoAtual.Equals(ListaRespostas.FirstOrDefault()))
+                Console.WriteLine("Loop, lista com 2 respostas");
+                if (_questaoAtual?.Equals(_listaRespostas?.FirstOrDefault()?.Questao) ?? false)
+                {
                     await ValidaEnviaRespostas();
+                    if (_jogoIniciado)
+                    {
+                        await EnviarMensagemPreparacao();
+                        await EnviarProximaQuestão();
+                    }
+                }
                 else 
-                    ListaRespostas = new List<Resposta>();
+                    _listaRespostas = new List<Resposta>();
             }
+        }
+
+        private async Task EnviarMensagemPreparacao()
+        {
+            RespostaEnvioCliente respostaEnvio = new RespostaEnvioCliente()
+            {
+                TiposResposta = TiposResposta.MENSAGEM,
+                MensagemTexto = "Prepare-se para próxima pergunta..."  
+            };
+            await EnviarParaTodos(respostaEnvio);
+            await Task.Delay(3000);
         }
 
         private async Task ValidaEnviaRespostas()
         {
-            var primeiraResposta = ListaRespostas.Where(x => x.PrimeiraResposta).FirstOrDefault();
-            var segundaResposta = ListaRespostas.Where(x => !x.PrimeiraResposta).FirstOrDefault();
+            var primeiraResposta = _listaRespostas.Where(x => x.PrimeiraResposta).FirstOrDefault();
+            var segundaResposta = _listaRespostas.Where(x => !x.PrimeiraResposta).FirstOrDefault();
+            StatusResultado statusPrimeiraResposta = StatusResultado.ERROU;
+            StatusResultado statusSegundaResposta = StatusResultado.ERROU;
 
-            if (QuestaoAtual.Correta.Equals(primeiraResposta.RespostaTexto))
+            Console.WriteLine("Veio validar as resposta...");
+
+            if (_questaoAtual?.Correta.ToUpper().Equals(primeiraResposta?.RespostaTexto?.ToUpper()) ?? false)
             {
-                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ACERTOU_ANTES);
-                if (QuestaoAtual.Correta.Equals(segundaResposta.RespostaTexto))
-                    await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ACERTOU_SEM_PONTUACAO);
+                statusPrimeiraResposta = StatusResultado.ACERTOU_ANTES;
+                if (_questaoAtual.Correta.ToUpper().Equals(segundaResposta?.RespostaTexto?.ToUpper()))
+                    statusSegundaResposta = StatusResultado.ACERTOU_SEM_PONTUACAO;
+                else
+                    statusSegundaResposta = StatusResultado.ERROU;
             }
-            else if (QuestaoAtual.Correta.Equals(segundaResposta.RespostaTexto))
+            else if (_questaoAtual?.Correta.ToUpper().Equals(segundaResposta?.RespostaTexto?.ToUpper()) ?? false)
             {
-                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ERROU);
-                await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ACERTOU_DEPOIS);
+                statusPrimeiraResposta = StatusResultado.ERROU;
+                statusSegundaResposta = StatusResultado.ACERTOU_DEPOIS;
             }
-            else
-            {
-                await ComputaPontosEnviaResultado(primeiraResposta.Jogador, StatusResultado.ERROU);
-                await ComputaPontosEnviaResultado(segundaResposta.Jogador, StatusResultado.ERROU);
-            }
+
+            await ComputaPontosEnviaResultado(primeiraResposta?.Jogador, statusPrimeiraResposta);
+            await ComputaPontosEnviaResultado(segundaResposta?.Jogador, statusSegundaResposta);
+
+            await Task.Delay(4000);
+
+            if (_listaJogadores[0].Pontuacao >= 30 || _listaJogadores[1].Pontuacao >= 30)
+                await EncerraJogo();
         }
 
-        private async Task ComputaPontosEnviaResultado(Jogador? jogador, StatusResultado statusResultado)
+        private async Task EncerraJogo()
+        {
+            foreach (var jogador in _listaJogadores)
+            {
+                Resultado resultado = new Resultado()
+                {
+                    TipoResultado = TipoResultado.FINAL,
+                    Pontuacao = jogador.Pontuacao,
+                    Jogador = jogador,
+                    Oponente = _listaJogadores.Where(x => !x.Equals(jogador)).FirstOrDefault()
+                };
+
+                await EnviaResultado(resultado, jogador);
+            }
+
+            _questaoAtual = null;
+            _listaQuestoes = new List<Questao>();
+            _listaRespostas = new List<Resposta>();
+            _listaJogadores = new List<Jogador>();
+            _jogoIniciado = false;
+        }
+
+        private async Task ComputaPontosEnviaResultado(Jogador jogador, StatusResultado statusResultado)
         {
             int pontuacaoRodada = 0;
             bool acertou = false;
@@ -110,13 +172,14 @@ namespace servidor
                 TipoResultado = TipoResultado.PARCIAL,
                 Acertou = acertou,
                 Primeiro = primeiro,
-                Pontuacao = pontuacaoRodada
+                Pontuacao = pontuacaoRodada,
+                RespostaCorreta = _questaoAtual?.Correta
             };
 
             await EnviaResultado(resultado, jogador);
         }
 
-        private async Task EnviaResultado(Resultado resultado, Jogador? jogador)
+        private async Task EnviaResultado(Resultado resultado, Jogador jogador)
         {
             RespostaEnvioCliente respostaEnvio = new RespostaEnvioCliente()
             {
@@ -124,31 +187,18 @@ namespace servidor
                 Resultado = resultado  
             };
 
-            await Enviar(respostaEnvio, jogador.EndPoint);
-        }
-
-        private void ComputaPontosPrimeiroJogadorAcertou(Jogador? jogador)
-        {
-            jogador.Pontuacao = jogador.Pontuacao + 5;
-            jogador.Acertou++;
-            jogador.RepondeuAntes++;
-        }
-
-        private void ComputaPontosSegundoJogadorAcertou(Jogador? jogador)
-        {
-            jogador.Pontuacao = jogador.Pontuacao + 3;
-            jogador.Acertou++;
-            jogador.RespondeuDepois++;
+            await Enviar(respostaEnvio, jogador?.EndPoint);
         }
 
         private async Task EnviarProximaQuestão()
         {
             CarregarProximaQuestao();
+            _listaRespostas = new List<Resposta>();
 
             RespostaEnvioCliente respostaEnvio = new RespostaEnvioCliente()
             {
                 TiposResposta = TiposResposta.PERGUNTA,
-                Questao = QuestaoAtual  
+                Questao = _questaoAtual  
             };
 
             await EnviarParaTodos(respostaEnvio);
@@ -156,26 +206,24 @@ namespace servidor
 
         private void CarregarProximaQuestao()
         {
-            if (ListaQuestoes.Count == 0)
+            if (_listaQuestoes.Count == 0)
             {
-                ListaQuestoes = new QuestoesService().GetQuestoes();
-                QuestaoAtual = ListaQuestoes[0];
+                _listaQuestoes = new QuestoesService().GetQuestoes();
+                _questaoAtual = _listaQuestoes[0];
             }
             else 
             {
-                int proximoIndex = ListaQuestoes.IndexOf(QuestaoAtual) + 1;
-                if (proximoIndex < ListaQuestoes.Count)
-                    QuestaoAtual = ListaQuestoes[proximoIndex];
+                int proximoIndex = _listaQuestoes.IndexOf(_questaoAtual) + 1;
+                if (proximoIndex < _listaQuestoes.Count)
+                    _questaoAtual = _listaQuestoes[proximoIndex];
             }
         }
 
-        private async void AbreConexao()
+        private void AbreConexao()
         {
-            Listener = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            
-            IPEndPoint local = new(IPAddress.Any, listenPort);
+            IPEndPoint local = new(IPAddress.Any, _listenPort);
 
-            Listener.Bind(local);
+            _listener.Bind(local);
             
             Console.WriteLine($"Conexão aberta! \n");
             Console.WriteLine($"Esperando participantes... \n");
@@ -185,10 +233,10 @@ namespace servidor
         {
             var endPointRemoto = new IPEndPoint(IPAddress.Any, 0);
 
-            return await Listener.ReceiveFromAsync(buffer, SocketFlags.None, endPointRemoto);
+            return await _listener.ReceiveFromAsync(_buffer, SocketFlags.None, endPointRemoto);
         }
 
-        private async Task EnviaMensagem(string mensagem, EndPoint? endPointRemoto)
+        private async Task EnviaMensagem(string mensagem, EndPoint endPointRemoto)
         {
             RespostaEnvioCliente resposta = new RespostaEnvioCliente()
             {
@@ -199,28 +247,30 @@ namespace servidor
             await Enviar(resposta, endPointRemoto);
         }
 
-        private async Task Enviar(RespostaEnvioCliente respostaEnvio, EndPoint? endPointRemoto)
+        private async Task Enviar(RespostaEnvioCliente respostaEnvio, EndPoint endPointRemoto)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(respostaEnvio));
-            await Listener.SendToAsync(bytes, SocketFlags.None, endPointRemoto);
+            await _listener.SendToAsync(bytes, SocketFlags.None, endPointRemoto);
         }
 
         private async Task EnviarParaTodos(RespostaEnvioCliente respostaEnvio)
         {
-            foreach(var jogador in ListaJogadores)
+            foreach(var jogador in _listaJogadores)
                 await Enviar(respostaEnvio, jogador.EndPoint);
         }
 
         private async Task ProcessaRetorno(RespostaRetornoCliente? retornoCliente)
         {
+            Console.WriteLine($"Recebi alguma coisa => {retornoCliente?.TiposResposta}");
             if (retornoCliente != null)
             {
                 switch (retornoCliente.TiposResposta)
                 {
                     case TiposResposta.NICKNAME:
-                        await IniciaJogador(retornoCliente.NickName, retornoCliente.EndPointRemoto);
+                        await IniciaJogador(retornoCliente.NickName, retornoCliente?.EndPointRemoto);
                         break;
                     case TiposResposta.RESPOSTA:
+                        Console.WriteLine($"{retornoCliente.RespostaQuestao} de {retornoCliente.EndPointRemoto}");
                         ProcessaResposta(retornoCliente.RespostaQuestao, retornoCliente.EndPointRemoto);
                         break;
                     case TiposResposta.MENSAGEM:
@@ -236,26 +286,27 @@ namespace servidor
         private void ProcessaResposta(string? respostaQuestao, EndPoint? endPointRemoto)
         {
             bool primeiraResposta = false;
-            if (ListaRespostas.Count == 0) primeiraResposta = true;
+            if (_listaRespostas.Count == 0) primeiraResposta = true;
 
-            ListaRespostas.Add(new Resposta()
+            _listaRespostas.Add(new Resposta()
             {
                 RespostaTexto = respostaQuestao,
                 PrimeiraResposta = primeiraResposta,
-                Jogador = ListaJogadores.Where(x => x.EndPoint.Equals(endPointRemoto)).FirstOrDefault(),
-                Questao = QuestaoAtual
+                Jogador = _listaJogadores.Where(x => x.EndPoint.Equals(endPointRemoto)).FirstOrDefault(),
+                Questao = _questaoAtual
             });
             
+            Console.WriteLine($"Agora a lista de resposta está com {_listaRespostas.Count}");
         }
 
-        private async Task IniciaJogador(string? nickName, EndPoint? endPointRemoto)
+        private async Task IniciaJogador(string? nickName, EndPoint endPointRemoto)
         {
-            if (ListaJogadores.Count < 2)
+            if (_listaJogadores.Count < 2)
             {
                 Jogador jogador = new Jogador(nickName, endPointRemoto);
-                ListaJogadores.Add(jogador);
+                _listaJogadores.Add(jogador);
 
-                if (ListaJogadores.Count == 2)
+                if (_listaJogadores.Count == 2)
                     await ComecarJogo();
                 else
                     await EnviaMensagem("Aguardando oponente...", endPointRemoto);
@@ -265,10 +316,10 @@ namespace servidor
 
         private async Task ComecarJogo()
         {
-            jogoIniciado = true;
-            foreach (var jogador in ListaJogadores)
+            _jogoIniciado = true;
+            foreach (var jogador in _listaJogadores)
             {
-                await EnviaMensagem("Todos participantes estão prontos! prepare-se!", jogador.EndPoint);
+                await EnviaMensagem("Todos participantes estão prontos! prepare-se!", jogador?.EndPoint);
             }
 
             await Task.Delay(3000);

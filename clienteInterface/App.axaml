@@ -1,0 +1,20 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="clienteInterface.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextoCor}"/>
+        </Style>
+        <Style Selector="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource TextoCor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource TextoCor}"/>
+        </Style>
+    </Application.Styles>
+    <Application.Resources>
+        <Color x:Key="TextoCor">Black</Color>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="clienteInterface.TelaPergunta">
+  
+  <UserControl.Styles>
+        <Style Selector="Button#NovoJogoBtn">
+            <Setter Property="Background" Value="#4F46E5"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Botão Responder -->
+        <Style Selector="Button#ResponderBtn">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="20,10,20,0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <TextBlock
+            x:Name="Pontuacao"
+            Text="Pontuação Atual: 0"
+            FontSize="20"
+            Margin="20"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"/>
+
+        <TextBlock
+            x:Name="Estatisticas"
+            Text=""
+            FontSize="20"
+            Margin="100"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"/>
+
+        
+
+            
+
+        <Grid VerticalAlignment="Center">
+            <StackPanel Margin="20" Spacing="10">
+
+                <!-- mensagem de espera -->
+                <TextBlock x:Name="MensagemEspera"
+                        Text="Aguardando oponente..."
+                        FontSize="20"
+                        HorizontalAlignment="Center"/>
+                
+                <Button x:Name="NovoJogoBtn"
+                    Content="Jogar Novamente"
+                    IsVisible="False"
+                    Click="NovoJogo_Click"
+                    HorizontalAlignment="Center"/>
+
+                <TextBlock x:Name="TextoPergunta"
+                        Text="Pergunta aqui"
+                        FontSize="24"
+                        IsVisible="False"
+                        HorizontalAlignment="Center"/>
+
+                <StackPanel x:Name="OpcoesPanel"
+                            Spacing="5"
+                            IsVisible="False"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
+
+                    <RadioButton x:Name="OpA" Content="A)" GroupName="Alternativas"/>
+                    <RadioButton x:Name="OpB" Content="B)" GroupName="Alternativas"/>
+                    <RadioButton x:Name="OpC" Content="C)" GroupName="Alternativas"/>
+                    <RadioButton x:Name="OpD" Content="D)" GroupName="Alternativas"/>
+                </StackPanel>
+
+                <Button x:Name="ResponderBtn"
+                        Content="Responder"
+                        IsVisible="False"
+                        Click="Responder_Click"
+                        HorizontalAlignment="Center"/>
+                
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+
+</UserControl>

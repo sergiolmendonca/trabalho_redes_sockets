@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace servidor
+namespace cliente
 {
     public class Resultado
     {
@@ -11,8 +11,6 @@ namespace servidor
         public bool Acertou { get; set; }
         public bool Primeiro { get; set; }
         public int Pontuacao { get; set; }
-        public string? RespostaCorreta { get; set; }
         public Jogador? Jogador { get; set; }
-        public Jogador? Oponente { get; set; }
     }
 }
