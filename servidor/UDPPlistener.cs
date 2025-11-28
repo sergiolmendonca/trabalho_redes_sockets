@@ -37,15 +37,18 @@ namespace servidor
             while (true)
             {
                 Mensagem mensagem = new();
-                
 
                 var recebido = await RecebeMensagem();
-                mensagem.ConverterMensagemRecebida(recebido, _buffer);
 
-                await ProcessaRetorno(mensagem.RespostaRetornoCliente);
+                _ = Task.Run(async () =>
+                {
+                    mensagem.ConverterMensagemRecebida(recebido, _buffer);
+                    await ProcessaRetorno(mensagem.RespostaRetornoCliente);
+                    if (_jogoIniciado)
+                        await LoopJogo();
+                });
+
                 
-                if (_jogoIniciado)
-                    await LoopJogo();
             }
         }
 
